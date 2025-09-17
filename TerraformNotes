@@ -1,0 +1,83 @@
+What is Terraform?
+Its a tool used to make infrastructure automation.
+its a free and not open source
+its platform independent
+it comes on the year of 2014
+who:Mitchel Hashimoto
+Owned:Hashicorp-->recently IBM is maintaining.
+terraform is written on the go language.
+We can call terraform as IAC tool.
+it is cloud Agonistic(it can used to work with any cloud and even it can manage things from onprem also)
+
+How it works?
+terraform used code to automate the infra.
+we use HCL: Hashicorp Configuration Language.
+
+IAC: Infrastructure as a code
+
+code--->execute-->Infra
+
+Advantage:-
+1.Reusable
+2.Time Saving
+3.Automation
+4.Avoiding mistakes
+5.Dry run (Do not Repeat Yourself)
+
+Cloud Alternatives:-
+CFT=AWS
+ARM=AZURE
+GDE=GOOGLE
+
+TERRAFORM=ALL CLOUDS
+
+Terraform Vs Ansible
+Terraform will create server
+and these servers will be configure by ansible.
+
+Installing Terraform on Linux:
+Step-1:Installing Terraform
+
+sudo yum install -y yum-utils shadow-utils
+sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+sudo yum -y install terraform
+
+terraform --version
+
+Note:Terraform is 3rd Party Tool, so we need to give permission to terraform to work with AWS
+
+Step:2 Giving IAM Role
+aws configure 
+
+MAIN ITEMS IN FILE:
+blocks
+lables (name, type of resource)
+arguments
+
+Configuration files:
+it will have resource configuration.
+here we write inputs for our resource
+based on that input terraform will create the real world resources.
+extension is ".tf"
+
+first create a terraform folder/directory
+mkdir terraform
+Get into the folder
+cd terraform
+create main.tf
+
+terraform code:-
+
+provider "aws" {
+    region="eu-north-1"
+}
+
+resource "aws_instance" "one" {
+    ami="ami-03eb6185d756497f8"
+    instance_type="t3.micro"
+}
+
+I-->init
+P-->plan
+A-->apply
+D-->destroy
