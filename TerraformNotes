@@ -73,7 +73,7 @@ provider "aws" {
 }
 
 resource "aws_instance" "one" {
-    ami="ami-03eb6185d756497f8"
+    ami="ami-0a716d3f3b16d290c"
     instance_type="t3.micro"
 }
 
@@ -81,3 +81,55 @@ I-->init
 P-->plan
 A-->apply
 D-->destroy
+
+Terraform Commands:-
+Terraform init:-Initialize the provider plugins on backend.It will store informations of plugin in .terraform folder.with-out plugins we can't create resource.
+each provider will have its own plugin
+we can get every provider from terraform registry
+once plugins are downloaded we should not need to run init command every time.
+
+PLUGINS:- Are Responsible to create resource in Cloud.
+
+Terraform Plan:-To create an execution plan
+it will take inputs given by users and plan the resource creation
+if we haven't given inputs for few fields it will take default values
+
+Terraform apply:-To create resources
+as per the given inputs on configuration file it will create the resources in real world.
+
+Terraform Destroy:-To delete resources.
+
+provider "aws" {
+    region= "eu-north-1"
+}
+
+resource "aws_instance" "One" {
+    count=5
+    ami="ami-03eb6185d756497f8"
+    instance_type= "t3.micro"
+}
+
+terraform apply --auto-approve
+terraform destroy --auto-approve
+
+STATE FILE: Used to store the resource information which is created by terraform to track the resource activities.
+in real time entire resource info is on state file.
+we need to keep it safe & secure.
+if we lost this file we can't track the infra.
+Command:
+terraform state list
+
+terraform target:used to destroy the specific resource
+
+Wanted to destroy single resource.
+terraform destroy -auto-approve -target="aws_instance.one[1]"
+
+Wanted to destroy multiple resources.
+terraform destroy -auto-approve -target="aws_instance.one[1]" -target="aws_instance.one[2]"
+
+Terraform FMT:-
+Used to give allignment and indentation for terraform files.
+rewrite configuration files to a canonical format and style.
+command:-terraform fmt
+
+
