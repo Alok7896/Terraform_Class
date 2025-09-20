@@ -132,4 +132,157 @@ Used to give allignment and indentation for terraform files.
 rewrite configuration files to a canonical format and style.
 command:-terraform fmt
 
+CLASS 2:-
+
+META ARGUMENTS:-
+PARALLELISM: By default terraform follows parallelism.
+it will execute all the resource at a time.
+By default parallelism limit is 10.
+Terraform can create maximum 10 resource at a time.
+Terraform apply -auto-approve -parallelism=1
+Note:-IT WILL APPLICABLE FOR BOTH APPLY & DESTROY.
+
+DEPENDS ON:One resource creation will be depending on other
+this is called explicit dependency.
+
+e.g
+
+provider "aws" {
+    region= "eu-north-1"
+}
+
+resource "aws_instance" "one" {
+    ami= "ami-046d18c147c36bef1"
+    instance_type= "t3.mircro"
+    tags={
+        Name= "test-server"
+    }
+}
+
+resource "aws_s3_bucket" "two" {
+    bucket = "terraformbucket123"
+    depends_on = [aws_instance.one]
+}
+
+2.COUNT : used to create similar objects.
+
+provider "aws" {
+  region = "eu-north-1"
+}
+
+resource "aws_instance" "one" {
+  count         = 3
+  ami           = "ami-046d18c147c36bef1"
+  instance_type = "t3.micro"
+  tags = {
+    Name = "dev-server-${count.index+1}"
+  }
+}
+
+NOTE:-It won't create resource with diferent config.
+
+3.FOR-EACH-->It is a loop used to create resource
+we can pass same code with different configuration.It will create resource with less code.
+
+provider "aws" {
+    region= "eu-north-1"
+}
+
+resource "aws_instance" "one" {
+    for_each=toset(["dev-server","test-server","prod-server"])
+    ami="ami-0a716d3f3b16d290c"
+    instance_type="t3.micro"
+    tags={
+        Name="${each.key}
+    }
+}
+
+4.Life Cycle:-
+
+PREVENT DESTROY:- It is used to prevent the resource to not be deleted.
+
+provider "aws" {
+    region:"eu-north-1"
+}
+
+resource "aws_instance" "one" {
+  ami           = "ami-046d18c147c36bef1"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "raham-server"
+  }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+NOTE: CHECK WITH TERRAFORM APPLY
+
+IGNORE CHANGES:
+when user modify anything on current state manually changes will be ignored.
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+resource "aws_instance" "one" {
+  ami           = "ami-046d18c147c36bef1"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "raham-server"
+  }
+  lifecycle {
+    ignore_changes = all
+  }
+}
+
+NOTE: MODIFY NAME MANUALLY AND CHECK WITH TERRAFORM APPLY
+
+CREATE BEFORE DESTROY:
+by default when we modify some properties terraform will first destroy old server and create new server later.
+
+if we follow create before destroy lifecycle the new resource will create first
+and later old resource is going to be destroyed.
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+resource "aws_instance" "one" {
+  ami           = "ami-0208b77a23d891325"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "raham-server"
+  }
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+TERRAFORM IMPORT:-
+when we create resource manually terraform won't track that resource.
+import command can used to import the resource which is created manually.
+can only import one resource at a time(FROM CLI)
+it can import both code to config file and state file.
+FOR STATE FILe: terraform import aws_instance.one(not preferable)
+
+FIRST CREATE A MANUAL SERVER.
+
+cat main.tf
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+import {
+  to = aws_instance.one
+  id = "i-0c23bdc1b7b73d61c"
+}
+
+FOR STATEFILE & CODE: 
+terraform plan -generate-config-out=ec2.tf
+NOTE: DELETE LINE 20 AND 21 FROM ec2.tf
+terraform apply -auto-approve
+terraform state list
+terraform destroy -auto-approve
 
