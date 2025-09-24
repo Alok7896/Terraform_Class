@@ -286,3 +286,64 @@ terraform apply -auto-approve
 terraform state list
 terraform destroy -auto-approve
 
+TERRAFORM TAINT COMMAND:-
+It allows you to manually mark a resource for recreation
+in real time some times resources fails to create so to recreate them we use taint
+in new version we use -replace option
+TO TAINT:Terraform taint aws_instance.one[0]
+TO UNTAINT:Terraform untaint aws_instance.one[0]
+
+terraform state list
+terraform taint aws_instance.one[0]
+terraform apply -auto-approve
+
+TERRAFORM REPLACE
+terraform apply -auto-approve -replace="aws_instance.one[0]"
+
+CODE:
+statefilebucketfroterraform
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+resource "aws_instance" "one" {
+  count         = 2
+  ami           = "ami-0866a3c8686eaeeba"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "raham"
+  }
+}
+
+TERRAFORM VALIDATE:
+use to validate the configuration files in your working directory.
+it will show error when we haven't given the values for variable.
+command:terraform validate
+
+TERRAFORM PLAN:
+use to save plan in a file for future reference.
+command:terraform plan -out myplan
+
+to apply : terraform apply myplan
+to destroy : terraform destroy 
+
+TERRAFORM REFRESH:
+This command will be use to refresh the state file
+terraform compares the current state to desired state, if it found any changes on the current state it will update value to state file.
+when we run plan, apply or destroy refresh will perform automatically.
+if a server is manually created running terraform apply -refresh only would detect those changes and update the state file to reflect the current state of the resource, but it won't attempt to change the infra to match the terraform configuration.
+
+if you don't want to refresh while apply & destroy use
+terraform apply/destroy -refresh=false
+
+TERRAFORM DEBUGGING:
+Terraform automates the infrastructure.
+issue like misconfigurations or dependency errors can occur.
+Debuging helps understand issue and fix them efficiently.
+You can set TF_LOG to one of the log levels TRACE,DEBuG,INFO,WARN or ERROR to change the verbosity of the logs, with TRACE being the most Verbose.
+
+export TF_LOG=TRACE
+export TF_LOG_PATH="logs.txt"
+terraform init
+terraform plan
