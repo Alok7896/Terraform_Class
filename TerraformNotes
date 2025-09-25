@@ -347,3 +347,439 @@ export TF_LOG=TRACE
 export TF_LOG_PATH="logs.txt"
 terraform init
 terraform plan
+
+ALIAS & PROVIDERS:
+We can map resource block to particular provider blocks.
+used to create resources on different regions.
+
+CODE:
+
+provider "aws" {
+region = "us-east-1"
+}
+
+resource "aws_instance" "three" {
+  ami           = "ami-0866a3c8686eaeeba"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "dev-server"
+  }
+}
+
+
+provider "aws" {
+region = "ap-south-1"
+alias = "south"
+}
+
+resource "aws_instance" "abcd" {
+  provider      = aws.south
+  ami           = "ami-08bf489a05e916bbd"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "dev-server"
+  }
+}
+
+--------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+what is default backend:local
+command to change the backend:terraform init -migrate-state
+why to lock state file:to prevent from corruption
+when state file will lock: when to people work on same state file parallely
+does local backend support state locking:no
+why use s3: to lock state file automatically.
+
+TERRAFORM STATE FILE:
+---------------------
+Terraform stores the infrastructure information on state file.
+it will automatically refreshed when we run plan,apply & destroy.
+In Terraform, a backend is a configuration that determines how and where terraform stores its state file & how it manages operations like apply,plan and destroy.
+
+By default terraform uses local backend.
+It stores state file in terraform.tfstate in local folder.
+It stores information in json format.
+If we delete any resource it stores information in terraform.tfstate.backup file.
+
+
+TERRAFORM STATE FILE LOCKING:
+----------------------------
+In real time once we complete our work we need to lock state file.
+It ensures that only one operation can be executed at a time.
+Once you lock state file you can't modify the infrastructure anymore.
+When two people working on state file at a time it will be locked automatically.
+unfortunately if two people runs apply at same time unpredicatble results, like creating duplicate resources or destroying the wrong infrastructure.
+Not all Terraform backends support locking. 
+
+Terraform used local backend to manage state file.
+But in that local backend only one person can able to access it.
+in Real time its's often necessary to have a centralized,consistent and secure storage mechanism for the state file.
+Amazon S3 is popular choice for this, and when combined with DynamoDB for locking it ensures safe consistent operations.
+
+TERRAFORM S3 BACKEND
+Advantage
+Global Access
+Team Collaboration
+Secure & Scalable
+Centralized State Management
+State File Versioning
+Disaster Recovery
+
+WHY LOCKING HAPPEND
+
+when 2 developers  work on the same project with same state file then  the locking will be happend.
+if state file is locked only first operation execute and second operation waits.
+to remove state lock use: terraform force-unlock <LOCK_ID>
+after adding dynamodb run:  terraform init -reconfigure
+
+Add that block to existing code and run terraform init -upgrade
+dynamodb -- > create table -- > Partition key: LockID -- > create
+now after apply state file will go to s3 bucket
+dev-1 type destroy and dev-2 type apply now state file locked.
+you can check lock-id in new items of table.
+once destroy done for dev-1 state file will be unlocked and dev-2 can work.
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+terraform {
+  backend "s3" {
+    bucket = "mybucket"
+    key    = "path/to/my/terraform.tfstate"
+    region = "us-east-1"
+    use_lockfile = true
+  }
+}
+
+resource "aws_instance" "one" {
+  ami           = "ami-0866a3c8686eaeeba"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "dev-server"
+  }
+}
+
+MIGRATING FROM  S3 TO LOCAL BACKEND
+
+if we want state file to back on local use below method.
+remove backend code from main.tf 
+run terraform init -migrate-state
+
+CODE:
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+
+resource "aws_instance" "one" {
+  ami           = "ami-0866a3c8686eaeeba"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "dev-server"
+  }
+}
+
+TERRAFORM REFRESH
+
+This command will be use to refresh the state file.
+terraform compares the current state to desired state, it it found any changes 
+       on the current state it will update values to state file.
+when we run plan, apply or destroy refresh will perform automatically.
+if a server is manually created running terraform apply -refresh-only would detect those changes and update the state file to reflect the current state of the resource, but it won't attempt to change the infrastructure to match the Terraform configuration.
+if you dont want to refresh while apply & destroy use 
+        terraform apply/destroy -refresh=false
+TERRAFORM BACKEND BLOCK
+
+By default there is no backend configuration block within Terraform configuration Because Terraform will use it's default backend - local 
+This is why we see the terraform.tfstate file in our working directory. 
+FOR PARTIAL BACKEND: 
+        path = "state_data/terraform.dev.tfstate"
+FROM CLI: 
+        terraform init -backend-config="path=state_data/terraform.prod.tfstate" -migrate-state
+If want we can specify multiple partial backends too.
+
+CODE:
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+terraform {
+  backend "local" {
+    path = "/tmp/abc.tfstate"
+  }
+}
+
+
+resource "aws_instance" "one" {
+  ami           = "ami-0866a3c8686eaeeba"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "dev-server"
+  }
+}
+
+TERRAFORM STATE COMMAND:
+------------------------
+The terraform state command is used for advanced state management.
+There are some cases where you may need to modify the Terraform state ranther than modify the state directly use these commands.
+
+Commands:-
+terraform state list:- to list the resources.
+terraform state show aws_subnet.two: to show specific resource info
+terraform state mv aws_subnet.two aws_subnet.three: to rename block
+terraform state rm aws_subnet.three: to remove state information of a resource
+terraform state pull: to pull state file info from backend.
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+PROVISOIONERS: to execute commands or scripts on servers.
+
+LOCAL EXEC:
+executes  command/script on local machine (where terraform is installed)
+it will execute the command when resource is created.
+
+CODE:
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+resource "aws_instance" "three" {
+  ami           = "ami-0866a3c8686eaeeba"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "abc-server"
+  }
+  provisioner "local-exec" {
+    command = "echo this is my local server"
+  }
+}
+REMOTE EXEC:
+
+executes  command/script on remote machine.
+once the server got created it will execute the commands and scripts for 
+installing the softwares and configuring them and deploying app also.
+
+
+CODE:
+
+provider "aws" {
+}
+
+resource "aws_instance" "one" {
+  ami                    = "ami-000ec6c25978d5999"
+  instance_type          = "t2.micro"
+  key_name               = "Rkeypair"
+  vpc_security_group_ids = ["sg-0329cd46bd67094a1"]
+  tags = {
+    Name = " rahaminstance"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo yum install httpd git -y",
+      "sudo systemctl start httpd",
+      "sudo cd /var/www/html",
+      "sudo git clone https://github.com/karishma1521success/swiggy-clone.git",
+      "sudo mv swiggy-clone/* .",
+      "sudo mv /home/ec2-user/* /var/www/html"
+    ]
+
+    connection {
+      type        = "ssh"
+      user        = "ec2-user"
+      private_key = file("~/.ssh/id_rsa")
+      host        = self.public_ip
+    }
+  }
+}
+
+FILE PROVISONER:-
+-----------------
+Commands we can execute through file
+Note:-Create a script on your local folder
+
+provider "aws" {
+    region ="eu-north-1"
+}
+
+provider "aws" {
+}
+
+resource "aws_instance" "one" {
+  ami                    = "ami-01816d07b1128cd2d"
+  instance_type          = "t2.micro"
+  key_name               = "swikp"
+  vpc_security_group_ids = ["sg-0c656c667bc0861e0"]
+  user_data              = "${file("apache.sh")}"
+
+  tags = {
+    Name = " rahaminstance"
+  }
+}
+
+apache.sh
+
+#! /bin/bash
+sudo -i
+sudo yum install httpd git -y
+sudo systemctl start httpd
+sudo systemctl status httpd
+sudo git clone https://github.com/Ironhack-Archive/online-clone-amazon.git
+sudo mv online-clone-amazon/* /var/www/html/
+
+
+provider "aws" {
+  region = "ap-south-1"
+}
+
+resource "aws_instance" "one" {
+  count                  = 3
+  ami                    = "ami-0144277607031eca2"
+  instance_type          = "t2.micro"
+  tags = {
+    Name = "dev-server-${count.index+1}"
+  }
+}
+
+output "server" {
+value = aws_instance.one[*].public_ip
+}
+
+PROVIDER BLOCK:
+---------------
+By default provider plugins in terraform change version for every few weeks.
+when we run init command, it download latest plugins always.
+some code will not work with old plugins, so we need to update them.
+to get latest provider plugins : https://registry.terraform.io/browser/providers.
+when you add a new provider terraform init is must.
+terraform providers: to list the providers which required to run code.
+to create infra on any cloud all we need to have is provider.
+
+TYPES:-
+-------
+OFFICIAL:-Managed by Terraform
+PARTNER:Managed By 3rd Party Company
+Community:Managed By Individuals
+
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      version = ">5.70.0"
+    }
+  }
+}
+
+MULTI PROVIDERS:
+
+terraform {
+  required_version = ">=1.9.0"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">5.70.0"
+    }
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "4.9.0"
+    }
+    google = {
+      source  = "hashicorp/google"
+      version = "6.10.0"
+    }
+  }
+}
+
+TERRAFORM BLOCK:
+-----------------
+This block is used to set global configurations and settings for the terraform.
+It usually include details such as required providers,backend configuration & version constraints.
+
+terraform -version
+
+Terraform Local Block:
+-----------------------
+A local block is used to define values.
+if a value is repeating multipule times we can define it here.
+This makes our code cleaner and easier to understand.
+Simply define value once and use for multiple times.
+
+CODE:-
+
+provider "aws"{
+    region="eu-north-1"
+}
+
+locals{
+    env="test"
+}
+
+resource "aws_vpc" "one" {
+  cidr_block = "10.0.0.0/16"
+  tags = {
+    Name = "${local.env}-vpc"
+  }
+}
+
+resource "aws_subnet" "two" {
+  vpc_id     = aws_vpc.one.id
+  cidr_block = "10.0.1.0/24"
+
+  tags = {
+    Name = "${local.env}-subent"
+  }
+}
+
+resource "aws_instance" "three" {
+  subnet_id     = aws_subnet.two.id
+  ami           = "ami-0866a3c8686eaeeba"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "${local.env}--server"
+  }
+}
+
+Terraform Comments:-
+-------------------
+We use comments to make others code to understand easily.
+Terraform supports three different syntaxes for comments.
+
+#---->Single line comment
+//--->single line comment
+/* */-->multi line comment
+
+Note:If we put comments for code, terraform thinks code is not existed and it will destroy the resource.
+
+TLS PROVIDER:
+-------------
+It provides utilities for working with transport layer security keys & certificates.
+It provides resources that allow private keys, certificates & CSR.
+Add tls on your own and try this below code.
+
+CODE:-
+
+resource "tls_private_key" "rsa-4096-example" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+
+resource "local_file" "private_key_pem" {
+  content  = tls_private_key.rsa-4096-example.private_key_pem
+  filename = "devops.pem"
+}
+
+
+TERRAFORM VARIABLE:
+-------------------
