@@ -971,3 +971,180 @@ yum install tree -y
 │   │   └── main.tf
 │   └── vpc_module
 │       └── main.tf
+
+mkdir -p my_instance/
+vim modules/my_instance/main.tf
+resource "aws_instance" "one" {
+  ami           = "ami-0ddc798b3f1a5117e"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "module-server"
+  }
+}
+
+
+s3_module/
+vim modules/s3_module/main.tf
+resource "aws_s3_bucket" "example" {
+  bucket = "rahamdemo-tf-test-bucket"
+}
+
+vpc_module/main.tf
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+  tags = {
+    Name = "module-vpc"
+  }
+}
+MODULE INPUT & OUTPUTS:
+------------------------
+We can add Input & Output blocks for terraform module
+Root module can refer both variables & values of child modules.
+Child modules cant refer variables, but it can refer its values.
+
+├── main.tf
+│   └── myec2
+│       ├── main.tf
+│       ├── output.tf
+│       └── variable.tf
+
+cat main.tf
+provider "aws" {
+region = "us-east-1"
+}
+
+module "server" {
+source = "./modules/myec2"
+}
+
+output "module_output" {
+value = module.server.public_ip
+}
+
+
+cat modules/myec2/main.tf
+resource "aws_instance" "one" {
+  ami           = var.ami
+  instance_type = var.instance_type
+  tags = {
+    Name = var.instance_name
+  }
+}
+
+cat modules/myec2/variable.tf
+variable "ami" {
+  default = "ami-0ddc798b3f1a5117e"
+}
+
+variable "instance_type" {
+  default = "t2.micro"
+}
+
+variable "instance_name" {
+  default = "module-server"
+}
+
+cat modules/myec2/output.tf
+output "public_ip" {
+  value = aws_instance.one.public_ip
+}
+
+PUBLIC MODULES:
+The module must be on Github and must be a public repo.
+Naming Format:Terraform-<provider>-<name>(terraform-aws-ec2-instance)
+must have a description.
+
+must have a description.
+module structure will be main.tf,variable.tf.output.tf
+x.y.z tags for release.
+
+TERRAFORM GRAPH:
+-------------------
+It shows the relationships between objects in a terraform configuration using DOT language.
+Once create infa run the command:terraform GRAPH.
+Go to Google---->Graphwiz online & copy paste the code.
+
+CODE:
+
+provider "aws" {
+region = "us-east-1"
+}
+
+resource "aws_vpc" "one" {
+  cidr_block = "10.0.0.0/16"
+  tags = {
+    Name = "dev-vpc"
+  }
+}
+
+resource "aws_subnet" "two" {
+  vpc_id     = aws_vpc.one.id
+  cidr_block = "10.0.1.0/24"
+
+  tags = {
+    Name = "dev-subent"
+  }
+}
+
+resource "aws_instance" "three" {
+  subnet_id     = aws_subnet.two.id
+  ami           = "ami-0866a3c8686eaeeba"
+  instance_type = "t2.micro"
+  tags = {
+    Name = "dev-server"
+  }
+}
+
+NAME: Graphwiz online
+
+
+HCP CLOUD:-
+-----------------
+
+DYNAMIC BLOCK:-
+---------------
+It is used to reduce the length of code and used for reusability of code in loop.
+
+provider "aws" {
+  region ="eu-north-1"
+}
+
+locals{
+  ingress_rules=[{port=443}, {port=80}, {port=22}]
+}
+
+resource "aws_security_group" "allow_tls" {
+  name        = "terra sg"
+  description = "Allow TLS inbound traffic"
+
+  dynamic "ingress" {
+    for_each = local.ingress_rules
+    content {
+      description = "*"
+      from_port   = ingress.value.port
+      to_port     = ingress.value.port
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+
+  tags = {
+    Name = "terra sg"
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
