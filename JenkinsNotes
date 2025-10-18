@@ -1,0 +1,63 @@
+JENKINS IS A CI/CD TOOL.
+REALITY:JENKINS IS ONLY FOR CI
+
+CI:-CONTINOUS INTEGRATION: CONTINOUS BUILD + CONTINOUS TEST (OLD CODE WITH NEW CODE)
+
+DAY-1-->100 LINES : BUILD + TEST
+DAY-2-->200 LINES : BUILD + TEST
+DAY-3-->300 LINES : BUILD + TEST
+
+BEFORE CI:
+MANUAL PROCESS
+TIME WASTE
+
+AFTER CI:
+AUTOMATED PROCESS
+TIME SAVING
+
+CD:CONTINOUS DELIVERY/DEPLOYMENT
+
+ENV:-
+PRE-PROD/NON-PROD:
+
+CONTINOUS DELIVERY: Deploying the application to production in manual.
+CONTINOUS DEPLOYMENT:Deploying the application to production in automatic.
+
+PIPELINE:
+WAKEUP---->DAILY ACTIVITIES --->BREAKFAST--->LUNCH-->CLASS
+CODE--->BUILD---->TEST--->ARTIFACT--->DEPLOY
+
+step by step execution of a process.
+Series of events interlinked with eachother.
+-----------------------------------------------------
+
+Jenkins:
+-----------
+Its a free and open-source tool.
+It is platform independent.
+It can automate entire SDLC.
+
+Jenkins written on java.
+It consist of plugins.
+We have community Support
+IT IS OWNED BY SUN MICRO SYSTEM AS HUDSON.
+HUDSON IS PAID VERSION.
+LATER ORACLE BROUGHT HUDSON AND MAKE IT FREE.
+LATER HUDSON WAS RENAMED AS JENKINS.
+INVENTOR: Kohsuke Kawaguchi
+PORT NUMBER: 8080
+JAVA: JAVA-17
+DEFAULT PATH: /var/lib/jenkins
+
+ALTERNATIVES:
+GITLAB, BAMBOO, GO CI, CIRCLE CI, TARVIS, SEMAPHORE, BUDDY BUILD MASTER, HARNESS, ARGOCD -----
+
+CLOUD: AWS CODEPIPELINE, AZURE PIPLEINE ---------------------
+
+
+
+
+
+
+
+
